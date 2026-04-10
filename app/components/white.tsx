@@ -12,6 +12,12 @@ import {
 
 const TOTAL_FRAMES = 151;
 const SCROLL_LENGTH_VH = 900;
+const WHEEL_SCRUB_DAMPING = 0.55;
+const MAX_SCRUB_STEP_RATIO = 0.32;
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
 
 function frameId(index: number) {
   return String(index + 1).padStart(3, "0");
@@ -169,6 +175,19 @@ export default function White({
   );
   const heroGradient = useMotionTemplate`linear-gradient(180deg, rgba(247,247,248,0) 0%, rgba(247,247,248,${isMobile ? 0.94 : 0.76}) 55%, rgba(247,247,248,0.98) 100%)`;
 
+  const getSectionScrollBounds = useCallback(() => {
+    const section = sectionRef.current;
+    if (!section) return null;
+
+    const top = section.getBoundingClientRect().top + window.scrollY;
+    const bottom = top + section.offsetHeight - window.innerHeight;
+
+    return {
+      top,
+      bottom: Math.max(top, bottom),
+    };
+  }, []);
+
   const drawFrame = useCallback((frameProgress: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -318,7 +337,7 @@ export default function White({
       rafRef.current = requestAnimationFrame(animate);
     };
 
-    const unsub = smoothProgress.on("change", (latest) => {
+    const unsub = scrollYProgress.on("change", (latest) => {
       targetFrameRef.current = Math.min(
         TOTAL_FRAMES - 1,
         Math.max(0, latest * (TOTAL_FRAMES - 1))
@@ -332,7 +351,7 @@ export default function White({
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     };
-  }, [drawFrame, isLoaded, smoothProgress]);
+  }, [drawFrame, isLoaded, scrollYProgress]);
 
   useMotionValueEvent(smoothProgress, "change", (latest) => {
     const normalized = Math.min(1, Math.max(0, latest / 0.045));
@@ -343,8 +362,74 @@ export default function White({
   useEffect(() => {
     if (!isLoaded) return;
 
+    let lastTouchY = 0;
+
+    const scrubWindowScroll = (deltaY: number) => {
+      const bounds = getSectionScrollBounds();
+      if (!bounds) return false;
+
+      const current = window.scrollY;
+      const withinSection = current >= bounds.top && current <= bounds.bottom;
+      const leavingAtEnd = deltaY > 0 && current >= bounds.bottom;
+      const leavingAtStart = deltaY < 0 && current <= bounds.top;
+
+      if (!withinSection || leavingAtEnd || leavingAtStart) {
+        return false;
+      }
+
+      const maxStep = window.innerHeight * MAX_SCRUB_STEP_RATIO;
+      const dampedDelta =
+        Math.sign(deltaY) *
+        Math.min(Math.abs(deltaY), maxStep) *
+        WHEEL_SCRUB_DAMPING;
+      const nextScrollY = clamp(current + dampedDelta, bounds.top, bounds.bottom);
+
+      if (Math.abs(nextScrollY - current) < 0.5) {
+        return true;
+      }
+
+      window.scrollTo({ top: nextScrollY, behavior: "auto" });
+      return true;
+    };
+
+    const handleWheel = (event: WheelEvent) => {
+      if (scrubWindowScroll(event.deltaY)) {
+        event.preventDefault();
+      }
+    };
+
+    const handleTouchStart = (event: TouchEvent) => {
+      lastTouchY = event.touches[0]?.clientY ?? 0;
+    };
+
+    const handleTouchMove = (event: TouchEvent) => {
+      const currentTouchY = event.touches[0]?.clientY;
+      if (currentTouchY == null) return;
+
+      const deltaY = lastTouchY - currentTouchY;
+      lastTouchY = currentTouchY;
+
+      if (scrubWindowScroll(deltaY * 1.35)) {
+        event.preventDefault();
+      }
+    };
+
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: false });
+
+    return () => {
+      window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
+    };
+  }, [getSectionScrollBounds, isLoaded]);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+
     const onResize = () => {
-      const progress = smoothProgress.get();
+      const progress = scrollYProgress.get();
       const frame = Math.min(
         TOTAL_FRAMES - 1,
         Math.max(0, progress * (TOTAL_FRAMES - 1))
@@ -361,12 +446,12 @@ export default function White({
     return () => {
       window.removeEventListener("resize", onResize);
     };
-  }, [drawFrame, isLoaded, smoothProgress]);
+  }, [drawFrame, isLoaded, scrollYProgress]);
 
   return (
     <section
       ref={sectionRef}
-      className="relative w-full overflow-x-hidden"
+      className="relative w-full overflow-x-hidden overscroll-y-contain"
       style={{ backgroundColor: bgColor, height: `${SCROLL_LENGTH_VH}vh` }}
     >
       <div className="sticky top-0 h-screen w-full overflow-hidden">
