@@ -3,17 +3,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   motion,
+  useMotionValue,
   useMotionTemplate,
   useMotionValueEvent,
-  useScroll,
   useSpring,
   useTransform,
 } from "framer-motion";
 
 const TOTAL_FRAMES = 151;
-const SCROLL_LENGTH_VH = 900;
-const WHEEL_SCRUB_DAMPING = 0.55;
-const MAX_SCRUB_STEP_RATIO = 0.32;
+const SCROLL_LENGTH_VH = 200;
+const SCRUB_PIXELS = 2200;
+const TOUCH_SCRUB_MULTIPLIER = 1.35;
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
@@ -94,13 +94,9 @@ export default function White({
   const [isLoaded, setIsLoaded] = useState(false);
   const [bgColor, setBgColor] = useState("#f7f7f8");
   const [isMobile, setIsMobile] = useState(false);
+  const sequenceProgress = useMotionValue(0);
 
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start start", "end end"],
-  });
-
-  const smoothProgress = useSpring(scrollYProgress, {
+  const smoothProgress = useSpring(sequenceProgress, {
     stiffness: 130,
     damping: 34,
     mass: 0.24,
@@ -337,7 +333,7 @@ export default function White({
       rafRef.current = requestAnimationFrame(animate);
     };
 
-    const unsub = scrollYProgress.on("change", (latest) => {
+    const unsub = sequenceProgress.on("change", (latest) => {
       targetFrameRef.current = Math.min(
         TOTAL_FRAMES - 1,
         Math.max(0, latest * (TOTAL_FRAMES - 1))
@@ -351,7 +347,7 @@ export default function White({
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     };
-  }, [drawFrame, isLoaded, scrollYProgress]);
+  }, [drawFrame, isLoaded, sequenceProgress]);
 
   useMotionValueEvent(smoothProgress, "change", (latest) => {
     const normalized = Math.min(1, Math.max(0, latest / 0.045));
@@ -370,26 +366,35 @@ export default function White({
 
       const current = window.scrollY;
       const withinSection = current >= bounds.top && current <= bounds.bottom;
-      const leavingAtEnd = deltaY > 0 && current >= bounds.bottom;
-      const leavingAtStart = deltaY < 0 && current <= bounds.top;
+      const progress = sequenceProgress.get();
 
-      if (!withinSection || leavingAtEnd || leavingAtStart) {
+      if (!withinSection) {
         return false;
       }
 
-      const maxStep = window.innerHeight * MAX_SCRUB_STEP_RATIO;
-      const dampedDelta =
-        Math.sign(deltaY) *
-        Math.min(Math.abs(deltaY), maxStep) *
-        WHEEL_SCRUB_DAMPING;
-      const nextScrollY = clamp(current + dampedDelta, bounds.top, bounds.bottom);
-
-      if (Math.abs(nextScrollY - current) < 0.5) {
+      if (deltaY > 0 && progress < 1) {
+        window.scrollTo({ top: bounds.top, behavior: "auto" });
+        sequenceProgress.set(clamp(progress + deltaY / SCRUB_PIXELS, 0, 1));
         return true;
       }
 
-      window.scrollTo({ top: nextScrollY, behavior: "auto" });
-      return true;
+      if (deltaY < 0 && progress > 0) {
+        window.scrollTo({ top: bounds.bottom, behavior: "auto" });
+        sequenceProgress.set(clamp(progress + deltaY / SCRUB_PIXELS, 0, 1));
+        return true;
+      }
+
+      if (deltaY > 0 && progress >= 1 && current < bounds.bottom - 1) {
+        window.scrollTo({ top: bounds.bottom, behavior: "auto" });
+        return true;
+      }
+
+      if (deltaY < 0 && progress <= 0 && current > bounds.top + 1) {
+        window.scrollTo({ top: bounds.top, behavior: "auto" });
+        return true;
+      }
+
+      return false;
     };
 
     const handleWheel = (event: WheelEvent) => {
@@ -409,7 +414,7 @@ export default function White({
       const deltaY = lastTouchY - currentTouchY;
       lastTouchY = currentTouchY;
 
-      if (scrubWindowScroll(deltaY * 1.35)) {
+      if (scrubWindowScroll(deltaY * TOUCH_SCRUB_MULTIPLIER)) {
         event.preventDefault();
       }
     };
@@ -423,13 +428,13 @@ export default function White({
       window.removeEventListener("touchstart", handleTouchStart);
       window.removeEventListener("touchmove", handleTouchMove);
     };
-  }, [getSectionScrollBounds, isLoaded]);
+  }, [getSectionScrollBounds, isLoaded, sequenceProgress]);
 
   useEffect(() => {
     if (!isLoaded) return;
 
     const onResize = () => {
-      const progress = scrollYProgress.get();
+      const progress = sequenceProgress.get();
       const frame = Math.min(
         TOTAL_FRAMES - 1,
         Math.max(0, progress * (TOTAL_FRAMES - 1))
@@ -446,7 +451,7 @@ export default function White({
     return () => {
       window.removeEventListener("resize", onResize);
     };
-  }, [drawFrame, isLoaded, scrollYProgress]);
+  }, [drawFrame, isLoaded, sequenceProgress]);
 
   return (
     <section
