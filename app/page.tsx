@@ -1,65 +1,126 @@
+"use client";
+
 import Image from "next/image";
+import { motion } from "framer-motion";
+import { useState } from "react";
+import White from "./components/white";
+import TravelingBlockSection from "./components/TravelingBlockSection";
 
 export default function Home() {
+  const [heroTransitionProgress, setHeroTransitionProgress] = useState(0);
+  const [heroScrollProgress, setHeroScrollProgress] = useState(0);
+  const t = Math.max(0, Math.min(1, heroTransitionProgress));
+  const compactT = Math.max(0, Math.min(1, t * 1.9));
+  const navWordT = Math.max(0, Math.min(1, (t - 0.98) / 0.02));
+  const navCtaT = Math.max(0, Math.min(1, (heroScrollProgress - 0.28) / 0.03));
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+    <main className="w-full">
+      <header className="fixed inset-x-0 top-0 z-50">
+        <motion.nav
+          animate={{
+            width: `clamp(288px, ${96 - compactT * 52}vw, 1100px)`,
+            height: 46 - compactT * 8,
+            marginTop: 12 - compactT * 4,
+            paddingLeft: 14 - compactT * 4,
+            paddingRight: 14 - compactT * 4,
+            borderRadius: 9999,
+          }}
+          transition={{ type: "spring", stiffness: 220, damping: 28, mass: 0.9 }}
+          className="relative mx-auto flex items-center justify-between border border-black/10 bg-white/20 backdrop-blur-md max-sm:max-w-[calc(100vw-1rem)] sm:max-w-[calc(100vw-2rem)]"
+        >
+          <div className="min-w-0 flex items-center gap-1.5">
             <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+              src="/logo.png"
+              alt="DeepMind logo"
+              width={142}
+              height={30}
+              priority
+              className="h-5 w-auto shrink-0 object-contain sm:h-6 md:h-7"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            <motion.span
+              style={{
+                opacity: navWordT,
+                x: (1 - navWordT) * -3,
+                scale: 0.92 + navWordT * 0.08,
+              }}
+              className="truncate text-xs font-medium tracking-tight sm:text-sm md:text-base"
+            >
+              <motion.span
+                className="inline-block bg-[length:200%_100%] text-transparent"
+                animate={{
+                  backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+                  y: [0, -0.5, 0],
+                  scale: [1, 1.01, 1],
+                }}
+                transition={{
+                  backgroundPosition: {
+                    duration: 8,
+                    repeat: Number.POSITIVE_INFINITY,
+                    ease: "easeInOut",
+                  },
+                  y: {
+                    duration: 3.2,
+                    repeat: Number.POSITIVE_INFINITY,
+                    ease: "easeInOut",
+                  },
+                  scale: {
+                    duration: 3.2,
+                    repeat: Number.POSITIVE_INFINITY,
+                    ease: "easeInOut",
+                  },
+                }}
+                style={{
+                  backgroundImage:
+                    "linear-gradient(90deg, #0b0b0c 0%, #4b5563 50%, #9ca3af 100%)",
+                  WebkitBackgroundClip: "text",
+                  backgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  textShadow: "0 6px 18px rgba(17,17,17,0.16)",
+                }}
+              >
+                DeepMind
+              </motion.span>
+            </motion.span>
+          </div>
+
+          <button
+            type="button"
+            aria-label="Open menu"
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-black/80"
           >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+            <span className="relative block h-3.5 w-4">
+              <span className="absolute left-0 top-0 h-[1.5px] w-4 bg-current" />
+              <span className="absolute left-0 top-1.5 h-[1.5px] w-4 bg-current" />
+              <span className="absolute left-0 top-3 h-[1.5px] w-4 bg-current" />
+            </span>
+          </button>
+
+          <motion.button
+            type="button"
+            style={{
+              opacity: navCtaT,
+              scale: 0.96 + navCtaT * 0.04,
+              y: (1 - navCtaT) * 2,
+              pointerEvents: navCtaT > 0.95 ? "auto" : "none",
+            }}
+            className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-2 px-2 py-0.5 text-[11px] font-medium tracking-[0.03em] text-black/55 sm:inline-flex md:text-xs"
+          >
+            <motion.span
+              animate={{ backgroundColor: ["#2563eb", "#f97316", "#2563eb"] }}
+              transition={{ duration: 2.4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
+              className="h-1.5 w-1.5 rounded-full"
+            />
+            Sign up now
+          </motion.button>
+        </motion.nav>
+      </header>
+
+      <White
+        onHeroTransitionProgressChange={setHeroTransitionProgress}
+        onHeroScrollProgressChange={setHeroScrollProgress}
+      />
+      <TravelingBlockSection />
+    </main>
   );
 }

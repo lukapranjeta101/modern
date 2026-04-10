@@ -1,0 +1,65 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="ocean" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(360 300) rotate(35) scale(760)">
+      <stop offset="0" stop-color="#7FE4FF"/>
+      <stop offset="0.35" stop-color="#34A9F7"/>
+      <stop offset="0.72" stop-color="#1C4ED8"/>
+      <stop offset="1" stop-color="#0A1A57"/>
+    </radialGradient>
+    <radialGradient id="specular" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(338 278) rotate(20) scale(280)">
+      <stop offset="0" stop-color="white" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="white" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="rim" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(512 512) rotate(90) scale(460)">
+      <stop offset="0.83" stop-color="#D8F5FF" stop-opacity="0"/>
+      <stop offset="1" stop-color="#C4F1FF" stop-opacity="0.6"/>
+    </radialGradient>
+    <linearGradient id="shade" x1="184" y1="170" x2="860" y2="860" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#000000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.36"/>
+    </linearGradient>
+    <filter id="blurCloud" x="120" y="120" width="784" height="784" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+    <clipPath id="planetClip">
+      <circle cx="512" cy="512" r="390"/>
+    </clipPath>
+  </defs>
+
+  <circle cx="512" cy="512" r="390" fill="url(#ocean)"/>
+
+  <g clip-path="url(#planetClip)">
+    <!-- North America -->
+    <path d="M260 390C275 330 338 286 408 292C468 298 510 338 522 372C534 404 506 426 470 436C442 444 420 472 391 486C344 508 292 494 270 456C259 437 252 414 260 390Z" fill="#5CCB5C"/>
+    <path d="M385 488C417 465 446 486 460 514C476 545 468 583 442 606C417 627 384 623 366 599C344 571 355 518 385 488Z" fill="#4BA84D"/>
+
+    <!-- South America -->
+    <path d="M462 546C498 542 529 567 541 598C557 642 541 693 512 736C486 774 450 790 425 769C399 747 396 699 408 660C418 626 430 592 462 546Z" fill="#4FAE4F"/>
+
+    <!-- Europe / Africa -->
+    <path d="M568 372C603 338 664 334 700 361C732 385 732 431 711 458C685 490 645 502 620 532C599 556 597 606 561 612C526 618 495 587 486 548C476 505 502 458 538 433C553 422 560 392 568 372Z" fill="#64C964"/>
+    <path d="M600 558C637 540 677 554 700 587C726 626 721 679 692 720C664 761 617 768 586 738C550 703 549 634 571 591C578 578 588 566 600 558Z" fill="#4EAD4E"/>
+
+    <!-- Asia -->
+    <path d="M644 336C708 299 795 311 847 360C898 408 894 484 850 532C809 577 739 601 678 589C636 581 602 548 592 506C583 470 607 433 639 408C658 393 677 376 644 336Z" fill="#63C763"/>
+
+    <!-- Australia -->
+    <path d="M760 652C797 643 840 657 858 690C877 724 857 761 822 775C788 788 746 781 726 751C706 719 724 661 760 652Z" fill="#56B756"/>
+
+    <!-- Ice caps -->
+    <ellipse cx="520" cy="182" rx="138" ry="44" fill="#E7FBFF" fill-opacity="0.75"/>
+    <ellipse cx="522" cy="850" rx="165" ry="54" fill="#E7FBFF" fill-opacity="0.62"/>
+
+    <!-- Cloud bands -->
+    <g filter="url(#blurCloud)" opacity="0.45">
+      <path d="M228 444C312 406 442 401 560 424C677 447 772 498 828 552" stroke="white" stroke-width="26" stroke-linecap="round"/>
+      <path d="M224 598C324 544 473 538 604 560C726 580 804 625 848 668" stroke="white" stroke-width="20" stroke-linecap="round"/>
+      <path d="M312 300C392 274 486 270 572 286" stroke="white" stroke-width="16" stroke-linecap="round"/>
+    </g>
+  </g>
+
+  <circle cx="512" cy="512" r="390" fill="url(#specular)"/>
+  <circle cx="512" cy="512" r="390" fill="url(#shade)"/>
+  <circle cx="512" cy="512" r="390" fill="url(#rim)"/>
+  <circle cx="512" cy="512" r="390" stroke="#D4F2FF" stroke-opacity="0.5" stroke-width="3"/>
+</svg>
